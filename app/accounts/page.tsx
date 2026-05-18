@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuth } from '@/hooks/useAuth'
+import { useCurrency } from '@/contexts/currency-context'
 import { Sidebar } from '@/components/sidebar'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -18,6 +19,7 @@ import { Trash2, Plus, AlertCircle } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { useState } from 'react'
 import useSWR, { mutate } from 'swr'
+import { SUPPORTED_CURRENCIES, type SupportedCurrency } from '@/lib/currency'
 
 interface Account {
   id: string
@@ -36,13 +38,14 @@ const fetcher = async (url: string) => {
 
 export default function AccountsPage() {
   const { user, loading: authLoading } = useAuth()
+  const { currency } = useCurrency()
   const { data: accounts = [], isLoading } = useSWR(user ? '/api/accounts' : null, fetcher)
 
   const [newAccount, setNewAccount] = useState({
     name: '',
     type: 'checking',
     balance: '',
-    currency: 'USD',
+    currency: currency,
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -71,7 +74,7 @@ export default function AccountsPage() {
       }
 
       mutate('/api/accounts')
-      setNewAccount({ name: '', type: 'checking', balance: '', currency: 'USD' })
+      setNewAccount({ name: '', type: 'checking', balance: '', currency: currency })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add account')
     } finally {
@@ -114,7 +117,7 @@ export default function AccountsPage() {
       <main className="flex-1 overflow-auto">
         <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">
           {/* Header */}
-          <div className="mb-8">
+          <div className="pt-16 md:pt-0 mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">Accounts</h1>
             <p className="text-muted-foreground">Manage your financial accounts</p>
           </div>
@@ -195,11 +198,11 @@ export default function AccountsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="NGN">NGN</SelectItem>
-                      <SelectItem value="USD">USD</SelectItem>
-                      <SelectItem value="EUR">EUR</SelectItem>
-                      <SelectItem value="GBP">GBP</SelectItem>
-                      <SelectItem value="CAD">CAD</SelectItem>
+                      {SUPPORTED_CURRENCIES.map((curr) => (
+                        <SelectItem key={curr} value={curr}>
+                          {curr}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

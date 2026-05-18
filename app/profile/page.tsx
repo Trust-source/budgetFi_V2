@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { useCurrency } from '@/contexts/currency-context'
 import { Sidebar } from '@/components/sidebar'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -17,9 +18,11 @@ import {
 } from '@/components/ui/select'
 import { formatCurrency } from '@/lib/utils'
 import { mutate } from 'swr'
+import { SUPPORTED_CURRENCIES, CURRENCY_LABELS, type SupportedCurrency } from '@/lib/currency'
 
 export default function ProfilePage() {
   const { user, profile, loading: authLoading } = useAuth()
+  const { currency, setCurrency } = useCurrency()
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -28,13 +31,11 @@ export default function ProfilePage() {
   const [success, setSuccess] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const [preferredCurrency, setPreferredCurrency] = useState('NGN')
-
   useEffect(() => {
     if (profile?.preferred_currency) {
-      setPreferredCurrency(profile.preferred_currency)
+      setCurrency(profile.preferred_currency as SupportedCurrency)
     }
-  }, [profile])
+  }, [profile, setCurrency])
   const handleUpdateCurrency = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -45,7 +46,7 @@ export default function ProfilePage() {
       const res = await fetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ preferred_currency: preferredCurrency }),
+        body: JSON.stringify({ preferred_currency: currency }),
       })
 
       if (!res.ok) {
@@ -116,7 +117,7 @@ export default function ProfilePage() {
 
       <main className="flex-1 overflow-auto">
         <div className="p-4 md:p-8 max-w-3xl mx-auto w-full">
-          <div className="mb-8">
+          <div className="pt-16 md:pt-0 mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">Profile Settings</h1>
             <p className="text-muted-foreground">Manage your account preferences</p>
           </div>
@@ -156,16 +157,16 @@ export default function ProfilePage() {
                 <Label htmlFor="currency" className="text-foreground">
                   Preferred Currency
                 </Label>
-                <Select value={preferredCurrency} onValueChange={setPreferredCurrency}>
+                <Select value={currency} onValueChange={(val) => setCurrency(val as SupportedCurrency)}>
                   <SelectTrigger className="bg-input border-border/50">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="USD">USD - US Dollar ({formatCurrency(1000, 'USD')})</SelectItem>
-                    <SelectItem value="NGN">NGN - Nigerian Naira ({formatCurrency(1000, 'NGN')})</SelectItem>
-                    <SelectItem value="EUR">EUR - Euro ({formatCurrency(1000, 'EUR')})</SelectItem>
-                    <SelectItem value="GBP">GBP - British Pound ({formatCurrency(1000, 'GBP')})</SelectItem>
-                    <SelectItem value="CAD">CAD - Canadian Dollar ({formatCurrency(1000, 'CAD')})</SelectItem>
+                    {SUPPORTED_CURRENCIES.map((curr) => (
+                      <SelectItem key={curr} value={curr}>
+                        {CURRENCY_LABELS[curr]} ({formatCurrency(1000, curr)})
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <p className="text-sm text-muted-foreground">

@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuth } from '@/hooks/useAuth'
+import { useCurrency } from '@/contexts/currency-context'
 import { Sidebar } from '@/components/sidebar'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -48,11 +49,11 @@ const fetcher = async (url: string) => {
 }
 
 export default function BudgetsPage() {
-  const { user, profile, loading: authLoading } = useAuth()
+  const { user, loading: authLoading } = useAuth()
+  const { currency } = useCurrency()
   const now = new Date()
   const currentMonth = now.getMonth() + 1
   const currentYear = now.getFullYear()
-  const preferredCurrency = profile?.preferred_currency || 'USD'
 
   const { data: budgets = [], isLoading: budgetsLoading } = useSWR(
     user ? `/api/budgets?month=${currentMonth}&year=${currentYear}` : null,
@@ -156,7 +157,7 @@ export default function BudgetsPage() {
       <main className="flex-1 overflow-auto">
         <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">
           {/* Header */}
-          <div className="mb-8">
+          <div className="pt-16 md:pt-0 mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">Budgets</h1>
             <p className="text-muted-foreground">
               Set and track budgets for {new Date(currentYear, currentMonth - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
@@ -273,7 +274,7 @@ export default function BudgetsPage() {
                           <div className="flex justify-between items-center mb-2">
                             <p className="text-sm text-muted-foreground">Spent</p>
                             <p className={`text-sm font-semibold ${isOverBudget ? 'text-destructive' : 'text-foreground'}`}>
-                              {formatCurrency(spent, preferredCurrency)} / {formatCurrency(budget.amount, preferredCurrency)}
+                              {formatCurrency(spent, currency)} / {formatCurrency(budget.amount, currency)}
                             </p>
                           </div>
                           <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
@@ -288,7 +289,7 @@ export default function BudgetsPage() {
 
                         {isOverBudget && (
                           <p className="text-sm text-destructive">
-                            Over budget by {formatCurrency(spent - budget.amount, preferredCurrency)}
+                            Over budget by {formatCurrency(spent - budget.amount, currency)}
                           </p>
                         )}
 

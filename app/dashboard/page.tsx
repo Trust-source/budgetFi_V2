@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { useCurrency } from '@/contexts/currency-context'
 import { Sidebar } from '@/components/sidebar'
 import { Card } from '@/components/ui/card'
 import { Spinner } from '@/components/ui/spinner'
@@ -34,7 +35,8 @@ const fetcher = async (url: string) => {
 }
 
 export default function DashboardPage() {
-  const { user, profile, loading: authLoading } = useAuth()
+  const { user, loading: authLoading } = useAuth()
+  const { currency } = useCurrency()
   const [seeded, setSeeded] = useState(false)
 
   // Seed categories on first load
@@ -54,8 +56,6 @@ export default function DashboardPage() {
     fetcher,
   )
   const { data: categories = [] } = useSWR(user ? '/api/categories' : null, fetcher)
-
-  const preferredCurrency = profile?.preferred_currency || 'USD'
 
   const totalBalance = accounts.reduce((sum: number, acc: Account) => sum + (acc.balance || 0), 0)
   const income = transactions
@@ -82,7 +82,7 @@ export default function DashboardPage() {
       <main className="flex-1 overflow-auto">
         <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">
           {/* Header */}
-          <div className="mb-8">
+          <div className="pt-16 md:pt-0 mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
             <p className="text-muted-foreground">Welcome back, {user?.email}</p>
           </div>
@@ -98,7 +98,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <p className="text-4xl font-bold text-foreground">
-                {formatCurrency(totalBalance, preferredCurrency)}
+                {formatCurrency(totalBalance, currency)}
               </p>
             </Card>
 
@@ -111,7 +111,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <p className="text-4xl font-bold text-foreground">
-                {formatCurrency(income, preferredCurrency)}
+                {formatCurrency(income, currency)}
               </p>
             </Card>
 
@@ -124,7 +124,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <p className="text-4xl font-bold text-foreground">
-                {formatCurrency(expenses, preferredCurrency)}
+                {formatCurrency(expenses, currency)}
               </p>
             </Card>
 
@@ -174,7 +174,7 @@ export default function DashboardPage() {
 
           {/* Spending Chart */}
           <div className="mb-8">
-            <SpendingChart transactions={transactions} categories={categories} currency={preferredCurrency} />
+            <SpendingChart transactions={transactions} categories={categories} currency={currency} />
           </div>
 
           {/* Recent Transactions */}
@@ -200,7 +200,7 @@ export default function DashboardPage() {
                           transaction.type === 'income' ? 'text-green-600' : 'text-foreground'
                         }`}
                       >
-                        {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount, accounts.find((a: Account) => a.id === transaction.account_id)?.currency || preferredCurrency)}
+                        {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount, accounts.find((a: Account) => a.id === transaction.account_id)?.currency || currency)}
                       </p>
                     </div>
                   ))}

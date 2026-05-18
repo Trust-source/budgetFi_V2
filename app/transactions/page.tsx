@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuth } from '@/hooks/useAuth'
+import { useCurrency } from '@/contexts/currency-context'
 import { Sidebar } from '@/components/sidebar'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -48,8 +49,8 @@ const fetcher = async (url: string) => {
 }
 
 export default function TransactionsPage() {
-  const { user, profile, loading: authLoading } = useAuth()
-  const preferredCurrency = profile?.preferred_currency || 'USD'
+  const { user, loading: authLoading } = useAuth()
+  const { currency } = useCurrency()
   const { data: transactions = [], isLoading: txLoading } = useSWR(
     user ? '/api/transactions' : null,
     fetcher,
@@ -149,7 +150,7 @@ export default function TransactionsPage() {
       <main className="flex-1 overflow-auto">
         <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">
           {/* Header */}
-          <div className="mb-8">
+          <div className="pt-16 md:pt-0 mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">Transactions</h1>
             <p className="text-muted-foreground">Track your income and expenses</p>
           </div>
@@ -354,7 +355,7 @@ export default function TransactionsPage() {
                             transaction.type === 'income' ? 'text-green-600' : 'text-foreground'
                           }`}
                         >
-                          {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount, accounts.find((a: Account) => a.id === transaction.account_id)?.currency || preferredCurrency)}
+                          {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount, accounts.find((a: Account) => a.id === transaction.account_id)?.currency || currency)}
                         </p>
                         <button
                           onClick={() => handleDeleteTransaction(transaction.id)}

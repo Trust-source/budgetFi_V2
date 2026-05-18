@@ -11,6 +11,7 @@ import {
 } from 'recharts'
 import { Card } from '@/components/ui/card'
 import { formatCurrency } from '@/lib/utils'
+import { useCurrency } from '@/contexts/currency-context'
 
 interface Transaction {
   id: string
@@ -46,8 +47,10 @@ export function SpendingChart({
   categories,
   month = new Date().getMonth() + 1,
   year = new Date().getFullYear(),
-  currency = 'USD',
+  currency: propCurrency,
 }: SpendingChartProps) {
+  const { currency: contextCurrency } = useCurrency()
+  const currency = propCurrency || contextCurrency
   const data = useMemo(() => {
     const categorySpending: Record<string, number> = {}
 
