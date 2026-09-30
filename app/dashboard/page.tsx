@@ -17,6 +17,19 @@ interface Account {
   type: string
   balance: number
   currency: string
+  balanceNgn?: number
+  rateToNgn?: number | null
+  convertedToNgn?: boolean
+}
+
+interface DashboardSummary {
+  baseCurrency: string
+  totalBalanceNgn: number
+  accounts: Account[]
+  rates: Record<string, number>
+  rateDate: string
+  rateProvider: string
+  allConverted: boolean
 }
 
 interface Transaction {
@@ -47,8 +60,8 @@ export default function DashboardPage() {
     }
   }, [user, seeded])
 
-  const { data: accounts = [], isLoading: accountsLoading } = useSWR(
-    user ? '/api/accounts' : null,
+  const { data: summary, isLoading: summaryLoading } = useSWR<DashboardSummary>(
+    user ? '/api/dashboard/summary' : null,
     fetcher,
   )
   const { data: transactions = [], isLoading: transactionsLoading } = useSWR(
@@ -57,7 +70,9 @@ export default function DashboardPage() {
   )
   const { data: categories = [] } = useSWR(user ? '/api/categories' : null, fetcher)
 
-  const totalBalance = accounts.reduce((sum: number, acc: Account) => sum + (acc.balance || 0), 0)
+  const accounts: Account[] = summary?.accounts ?? []
+  const totalBalanceNgn = summary?.totalBalanceNgn ?? 0
+
   const income = transactions
     .filter((t: Transaction) => t.type === 'income')
     .reduce((sum: number, t: Transaction) => sum + t.amount, 0)
@@ -65,7 +80,7 @@ export default function DashboardPage() {
     .filter((t: Transaction) => t.type === 'expense')
     .reduce((sum: number, t: Transaction) => sum + t.amount, 0)
 
-  const loading = authLoading || accountsLoading || transactionsLoading
+  const loading = authLoading || summaryLoading || transactionsLoading
 
   if (authLoading) {
     return (
@@ -89,7 +104,7 @@ export default function DashboardPage() {
 
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {/* Total Balance */}
+            {/* Total Balance (always NGN) */}
             <Card className="p-8 border-border/50">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-medium text-muted-foreground">Total Balance</h3>
@@ -98,7 +113,17 @@ export default function DashboardPage() {
                 </div>
               </div>
               <p className="text-4xl font-bold text-foreground">
-                {formatCurrency(totalBalance, currency)}
+                {summaryLoading ? (
+                  <span className="inline-flex items-center gap-2 text-muted-foreground">
+                    <Spinner className="size-6" /> Loading...
+                  </span>
+                ) : (
+                  formatCurrency(totalBalanceNgn, 'NGN')
+                )}
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Combined total in Nigerian Naira
+                {summary?.rateDate ? ` · rates as of ${new Date(summary.rateDate).toLocaleDateString()}` : ''}
               </p>
             </Card>
 
@@ -145,7 +170,7 @@ export default function DashboardPage() {
           {/* Accounts List */}
           <div className="mb-8">
             <h2 className="text-xl font-bold text-foreground mb-4">Your Accounts</h2>
-            {accountsLoading ? (
+            {summaryLoading ? (
               <div className="flex justify-center py-8">
                 <Spinner />
               </div>
@@ -162,6 +187,11 @@ export default function DashboardPage() {
                     <p className="text-2xl font-bold text-primary">
                       {formatCurrency(account.balance, account.currency)}
                     </p>
+                    {account.convertedToNgn && typeof account.balanceNgn === 'number' && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        ≈ {formatCurrency(account.balanceNgn, 'NGN')}
+                      </p>
+                    )}
                   </Card>
                 ))}
               </div>

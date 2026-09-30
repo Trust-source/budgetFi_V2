@@ -81,15 +81,13 @@ export default function ProfilePage() {
     setPasswordLoading(true)
 
     try {
-      const { createClient } = await import('@/lib/supabase/client')
-      const supabase = createClient()
+      const { updatePasswordAction } = await import('@/lib/supabase/auth-actions')
+      const formData = new FormData()
+      formData.set('password', newPassword)
+      const result = await updatePasswordAction(formData)
 
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword,
-      })
-
-      if (updateError) {
-        throw new Error(updateError.message)
+      if (result.error) {
+        throw new Error(result.error)
       }
 
       setCurrentPassword('')

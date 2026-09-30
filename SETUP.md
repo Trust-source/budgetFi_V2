@@ -241,7 +241,7 @@ budgetfi/
 │   │   ├── server.ts
 │   │   └── proxy.ts
 │   └── utils.ts
-├── middleware.ts                # Auth middleware
+├── proxy.ts                   # Auth proxy (Next.js 16)
 ├── README.md                    # Documentation
 └── SETUP.md                     # This file
 ```

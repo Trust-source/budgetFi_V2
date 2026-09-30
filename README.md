@@ -210,7 +210,7 @@ Modify account type options in form components
 
 **Auth redirects not working**
 - Verify `NEXT_PUBLIC_SUPABASE_URL` is correct
-- Check middleware.ts is in root directory
+- Check proxy.ts is in root directory
 
 ## Contributing
 

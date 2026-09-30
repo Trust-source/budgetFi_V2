@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { logoutAction } from '@/lib/supabase/auth-actions'
 import type { User } from '@supabase/supabase-js'
 
 interface Profile {
@@ -78,8 +79,15 @@ export function useAuth() {
 
   const logout = async () => {
     try {
-      await supabase.auth.signOut()
+      const result = await logoutAction()
+      if (result.error) {
+        setError(result.error)
+        return
+      }
+      setUser(null)
+      setProfile(null)
       router.push('/auth/login')
+      router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     }

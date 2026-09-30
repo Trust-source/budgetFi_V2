@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { updatePasswordAction } from '@/lib/supabase/auth-actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,36 +13,33 @@ import { AlertCircle, Loader2, CheckCircle } from 'lucide-react'
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [isPending, startTransition] = useTransition()
   const router = useRouter()
-  const supabase = createClient()
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
     setError(null)
 
     if (password !== confirmPassword) {
       setError('Passwords do not match')
-      setLoading(false)
       return
     }
 
     if (password.length < 6) {
       setError('Password must be at least 6 characters')
-      setLoading(false)
       return
     }
 
-    try {
-      const { error: updateError } = await supabase.auth.updateUser({
-        password,
-      })
+    const formData = new FormData()
+    formData.set('password', password)
 
-      if (updateError) {
-        setError(updateError.message)
+    startTransition(async () => {
+      const result = await updatePasswordAction(formData)
+
+      if (result.error) {
+        setError(result.error)
         return
       }
 
@@ -50,11 +47,7 @@ export default function ResetPasswordPage() {
       setTimeout(() => {
         router.push('/dashboard')
       }, 2000)
-    } catch (err) {
-      setError('An unexpected error occurred')
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
   return (
@@ -99,7 +92,7 @@ export default function ResetPasswordPage() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  disabled={loading}
+                  disabled={isPending}
                   required
                   className="bg-input border-border/50"
                 />
@@ -113,7 +106,7 @@ export default function ResetPasswordPage() {
                   placeholder="••••••••"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  disabled={loading}
+                  disabled={isPending}
                   required
                   className="bg-input border-border/50"
                 />
@@ -121,10 +114,10 @@ export default function ResetPasswordPage() {
 
               <Button
                 type="submit"
-                disabled={loading}
+                disabled={isPending}
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
               >
-                {loading ? (
+                {isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Updating password...

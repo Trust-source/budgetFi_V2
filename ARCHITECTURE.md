@@ -19,9 +19,9 @@ Supabase (PostgreSQL + Auth)
 ```
 User → Sign Up/Login Page
     ↓
-Supabase Auth → Email Verification
+Server Actions → Supabase Auth (server-side)
     ↓
-Middleware (proxy.ts) → Session Management
+Proxy (proxy.ts) → Session refresh via getClaims()
     ↓
 Protected Routes (Dashboard, Accounts, etc.)
     ↓
@@ -31,8 +31,9 @@ Logout → Clear Session
 ### Key Files
 - `lib/supabase/client.ts` - Browser-side Supabase client
 - `lib/supabase/server.ts` - Server-side Supabase client
-- `lib/supabase/proxy.ts` - Middleware for session refresh
-- `middleware.ts` - Route protection
+- `lib/supabase/auth-actions.ts` - Server Actions for login/signup/password
+- `lib/supabase/proxy.ts` - Session refresh helper
+- `proxy.ts` - Route protection (Next.js 16 Proxy)
 - `hooks/useAuth.ts` - Auth state management
 
 ## Database Schema
